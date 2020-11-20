@@ -512,6 +512,7 @@ public class MavenBuildWriter {
 					writeRepositories(writer, profile.getRepositories(), profile.getPluginRepositories());
 					writeDependencies(writer, profile.getDependencies());
 					writeReporting(writer, profile.getReporting());
+					writeCollectionElement(writer, "plugins", profile.getPlugins().values(), this::writePlugin);
 					writeDependencyManagement(writer, profile.getDependencyManagement());
 					writeDistributionManagement(writer, profile.getDistributionManagement());
 					writeConfiguration(writer, "properties", profile.getProperties());

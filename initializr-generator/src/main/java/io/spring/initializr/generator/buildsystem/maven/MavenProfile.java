@@ -50,6 +50,8 @@ public class MavenProfile {
 
 	private final MavenConfiguration properties;
 
+	private final MavenPluginContainer plugins;
+
 	protected MavenProfile(Builder builder) {
 		this.id = builder.id;
 		this.activation = Optional.ofNullable(builder.activationBuilder).map(MavenProfileActivation.Builder::build)
@@ -65,6 +67,7 @@ public class MavenProfile {
 				.map(MavenDistributionManagement.Builder::build)
 				.orElse(new MavenDistributionManagement.Builder().build());
 		this.properties = Optional.ofNullable(builder.properties).map(MavenConfiguration.Builder::build).orElse(null);
+		this.plugins = builder.pluginContainer;
 	}
 
 	public String getId() {
@@ -111,6 +114,10 @@ public class MavenProfile {
 		return this.properties;
 	}
 
+	public MavenPluginContainer getPlugins() {
+		return this.plugins;
+	}
+
 	public static class Builder {
 
 		private final String id;
@@ -129,6 +136,8 @@ public class MavenProfile {
 
 		private DependencyContainer dependencies;
 
+		private MavenPluginContainer pluginContainer;
+
 		private MavenReporting.Builder reportingBuilder;
 
 		private BomContainer dependencyManagement;
@@ -144,6 +153,7 @@ public class MavenProfile {
 			this.repositories = new MavenRepositoryContainer(this.buildItemResolver::resolveRepository);
 			this.pluginRepositories = new MavenRepositoryContainer(this.buildItemResolver::resolveRepository);
 			this.dependencies = new DependencyContainer(this.buildItemResolver::resolveDependency);
+			this.pluginContainer = new MavenPluginContainer();
 		}
 
 		public Builder activation(Consumer<MavenProfileActivation.Builder> activation) {
@@ -212,6 +222,11 @@ public class MavenProfile {
 				this.properties = new MavenConfiguration.Builder();
 			}
 			properties.accept(this.properties);
+			return this;
+		}
+
+		public Builder plugins(Consumer<MavenPluginContainer> plugins) {
+			plugins.accept(this.pluginContainer);
 			return this;
 		}
 
