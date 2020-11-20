@@ -995,7 +995,7 @@ class MavenBuildWriterTests {
 			assertThat(profile).textAtPath("id").isEqualTo("profile1");
 			assertThat(profile).textAtPath("build/defaultGoal").isEqualTo("compile");
 			assertThat(profile).textAtPath("build/directory").isEqualTo("/directory");
-			assertThat(profile).textAtPath("build/fileName").isEqualTo("build.txt");
+			assertThat(profile).textAtPath("build/finalName").isEqualTo("build.txt");
 			assertThat(profile).nodeAtPath("activation").isNull();
 			assertThat(profile).nodeAtPath("modules").isNull();
 			assertThat(profile).nodeAtPath("repositories").isNull();

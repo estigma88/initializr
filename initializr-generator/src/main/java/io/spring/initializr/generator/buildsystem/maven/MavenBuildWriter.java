@@ -528,7 +528,9 @@ public class MavenBuildWriter {
 
 		writer.println();
 		writeElement(writer, "activation", () -> {
-			writeSingleElement(writer, "activeByDefault", String.valueOf(activation.getActiveByDefault()));
+			if (activation.getActiveByDefault() != null) {
+				writeSingleElement(writer, "activeByDefault", String.valueOf(activation.getActiveByDefault()));
+			}
 			writeSingleElement(writer, "jdk", activation.getJdk());
 
 			MavenProfileActivationOS os = activation.getOs();
@@ -568,7 +570,7 @@ public class MavenBuildWriter {
 		writeElement(writer, "build", () -> {
 			writeSingleElement(writer, "defaultGoal", build.getDefaultGoal());
 			writeSingleElement(writer, "directory", build.getDirectory());
-			writeSingleElement(writer, "fileName", build.getFinalName());
+			writeSingleElement(writer, "finalName", build.getFinalName());
 			writeCollectionElement(writer, "filters", build.getFilters(),
 					(IndentingWriter writerInner, String filter) -> writeSingleElement(writerInner, "filter", filter));
 			writeResources(writer, build.getResources(), build.getTestResources());
