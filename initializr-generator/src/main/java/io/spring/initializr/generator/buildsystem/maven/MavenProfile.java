@@ -62,7 +62,8 @@ public class MavenProfile {
 		this.reporting = Optional.ofNullable(builder.reportingBuilder).map(MavenReporting.Builder::build).orElse(null);
 		this.dependencyManagement = builder.dependencyManagement;
 		this.distributionManagement = Optional.ofNullable(builder.distributionManagementBuilder)
-				.map(MavenDistributionManagement.Builder::build).orElse(new MavenDistributionManagement.Builder().build());
+				.map(MavenDistributionManagement.Builder::build)
+				.orElse(new MavenDistributionManagement.Builder().build());
 		this.properties = Optional.ofNullable(builder.properties).map(MavenConfiguration.Builder::build).orElse(null);
 	}
 

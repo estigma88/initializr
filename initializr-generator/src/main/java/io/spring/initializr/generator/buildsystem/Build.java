@@ -113,4 +113,5 @@ public abstract class Build {
 	public BuildItemResolver getResolver() {
 		return resolver;
 	}
+
 }
