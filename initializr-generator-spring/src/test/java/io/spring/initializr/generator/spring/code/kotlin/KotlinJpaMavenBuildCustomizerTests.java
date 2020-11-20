@@ -18,8 +18,8 @@ package io.spring.initializr.generator.spring.code.kotlin;
 
 import java.util.Collections;
 
-import io.spring.initializr.generator.buildsystem.maven.MavenConfiguration;
 import io.spring.initializr.generator.buildsystem.maven.MavenBuild;
+import io.spring.initializr.generator.buildsystem.maven.MavenConfiguration;
 import io.spring.initializr.generator.buildsystem.maven.MavenPlugin;
 import io.spring.initializr.generator.test.InitializrMetadataTestBuilder;
 import io.spring.initializr.generator.version.Version;

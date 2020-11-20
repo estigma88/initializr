@@ -16,19 +16,18 @@
 
 package io.spring.initializr.generator.buildsystem.maven;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-
 import java.util.Arrays;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 import io.spring.initializr.generator.buildsystem.BillOfMaterials;
 import io.spring.initializr.generator.buildsystem.BuildItemResolver;
 import io.spring.initializr.generator.buildsystem.Dependency;
 import io.spring.initializr.generator.buildsystem.MavenRepository;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @ExtendWith(MockitoExtension.class)
 class MavenProfileContainerTests {
@@ -101,7 +100,7 @@ class MavenProfileContainerTests {
 
 	@Test
 	void addProfileSeveralTimeReuseConfiguration() {
-		MavenProfileContainer profileContainer = new MavenProfileContainer(buildItemResolver);
+		MavenProfileContainer profileContainer = new MavenProfileContainer(this.buildItemResolver);
 		profileContainer.add("profile1",
 				(profile) -> profile.activation((activation) -> activation.activeByDefault(true)));
 		profileContainer.add("profile1",

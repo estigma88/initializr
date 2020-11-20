@@ -18,8 +18,8 @@ package io.spring.initializr.generator.buildsystem.maven;
 
 import java.util.List;
 
-import io.spring.initializr.generator.buildsystem.maven.MavenPlugin.Builder;
 import io.spring.initializr.generator.buildsystem.maven.MavenConfiguration.Setting;
+import io.spring.initializr.generator.buildsystem.maven.MavenPlugin.Builder;
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;

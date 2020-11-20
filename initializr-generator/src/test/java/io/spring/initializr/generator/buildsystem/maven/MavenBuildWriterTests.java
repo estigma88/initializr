@@ -16,8 +16,11 @@
 
 package io.spring.initializr.generator.buildsystem.maven;
 
+import java.io.StringWriter;
+import java.util.Comparator;
+import java.util.function.Consumer;
+
 import io.spring.initializr.generator.buildsystem.BillOfMaterials;
-import io.spring.initializr.generator.buildsystem.BomContainer;
 import io.spring.initializr.generator.buildsystem.Dependency;
 import io.spring.initializr.generator.buildsystem.Dependency.Exclusion;
 import io.spring.initializr.generator.buildsystem.DependencyScope;
@@ -26,12 +29,7 @@ import io.spring.initializr.generator.buildsystem.maven.MavenLicense.Distributio
 import io.spring.initializr.generator.io.IndentingWriter;
 import io.spring.initializr.generator.version.VersionProperty;
 import io.spring.initializr.generator.version.VersionReference;
-import java.util.Comparator;
 import org.junit.jupiter.api.Test;
-
-import java.io.StringWriter;
-import java.util.Arrays;
-import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -989,7 +987,7 @@ class MavenBuildWriterTests {
 	@Test
 	void powWithProfileBuild() {
 		MavenBuild build = new MavenBuild();
-		build.profiles().add("profile1", profile -> profile.build(
+		build.profiles().add("profile1", (profile) -> profile.build(
 				(profileBuild) -> profileBuild.defaultGoal("compile").directory("/directory").finalName("build.txt")));
 
 		generatePom(build, (pom) -> {
@@ -1014,7 +1012,7 @@ class MavenBuildWriterTests {
 	void powWithProfileBuildFilters() {
 		MavenBuild build = new MavenBuild();
 		build.profiles().add("profile1",
-				profile -> profile.build((profileBuild) -> profileBuild.filter("filter1").filter("filter2")));
+				(profile) -> profile.build((profileBuild) -> profileBuild.filter("filter1").filter("filter2")));
 
 		generatePom(build, (pom) -> {
 			NodeAssert profile = pom.nodeAtPath("/project/profiles/profile");
@@ -1038,7 +1036,7 @@ class MavenBuildWriterTests {
 	@Test
 	void powWithProfileBuildResources() {
 		MavenBuild build = new MavenBuild();
-		build.profiles().add("profile1", profile -> profile.build((profileBuild) -> profileBuild.resources(
+		build.profiles().add("profile1", (profile) -> profile.build((profileBuild) -> profileBuild.resources(
 				(resources) -> resources.add("src/main/custom", (resource) -> resource.includes("**/*.properties")))));
 
 		generatePom(build, (pom) -> {
@@ -1066,7 +1064,7 @@ class MavenBuildWriterTests {
 	void powWithProfileBuildTestResources() {
 		MavenBuild build = new MavenBuild();
 		build.profiles().add("profile1",
-				profile -> profile.build(
+				(profile) -> profile.build(
 						(profileBuild) -> profileBuild.testResources((resources) -> resources.add("src/test/custom",
 								(resource) -> resource.excludes("**/*.gen").filtering(true).targetPath("test")))));
 
@@ -1094,7 +1092,7 @@ class MavenBuildWriterTests {
 	@Test
 	void powWithProfileBuildPluginManagement() {
 		MavenBuild build = new MavenBuild();
-		build.profiles().add("profile1", profile -> profile
+		build.profiles().add("profile1", (profile) -> profile
 				.build((profileBuild) -> profileBuild.pluginManagement((pluginManagement) -> pluginManagement
 						.plugins((plugins) -> plugins.add("org.springframework.boot", "spring-boot-maven-plugin")))));
 
@@ -1121,7 +1119,7 @@ class MavenBuildWriterTests {
 	@Test
 	void powWithProfileBuildPlugin() {
 		MavenBuild build = new MavenBuild();
-		build.profiles().add("profile1", profile -> profile.build((profileBuild) -> profileBuild
+		build.profiles().add("profile1", (profile) -> profile.build((profileBuild) -> profileBuild
 				.plugins((plugins) -> plugins.add("org.springframework.boot", "spring-boot-maven-plugin"))));
 
 		generatePom(build, (pom) -> {
@@ -1147,7 +1145,7 @@ class MavenBuildWriterTests {
 	@Test
 	void powWithProfileModules() {
 		MavenBuild build = new MavenBuild();
-		build.profiles().add("profile1", profile -> profile.module("module1").module("module2"));
+		build.profiles().add("profile1", (profile) -> profile.module("module1").module("module2"));
 
 		generatePom(build, (pom) -> {
 			NodeAssert profile = pom.nodeAtPath("/project/profiles/profile");
@@ -1172,7 +1170,7 @@ class MavenBuildWriterTests {
 	void powWithProfileRepositories() {
 		MavenBuild build = new MavenBuild();
 		build.profiles().add("profile1",
-				profile -> profile.repositories((repositories) -> repositories
+				(profile) -> profile.repositories((repositories) -> repositories
 						.add(MavenRepository.withIdAndUrl("spring-milestones", "https://repo.spring.io/milestone")
 								.name("Spring Milestones"))));
 
@@ -1200,7 +1198,7 @@ class MavenBuildWriterTests {
 	void powWithProfilePluginRepositories() {
 		MavenBuild build = new MavenBuild();
 		build.profiles().add("profile1",
-				profile -> profile.pluginRepositories((repositories) -> repositories
+				(profile) -> profile.pluginRepositories((repositories) -> repositories
 						.add(MavenRepository.withIdAndUrl("spring-milestones", "https://repo.spring.io/milestone")
 								.name("Spring Milestones"))));
 
@@ -1227,7 +1225,7 @@ class MavenBuildWriterTests {
 	@Test
 	void powWithProfileDependencies() {
 		MavenBuild build = new MavenBuild();
-		build.profiles().add("profile1", profile -> profile.dependencies((dependencies) -> dependencies.add("root",
+		build.profiles().add("profile1", (profile) -> profile.dependencies((dependencies) -> dependencies.add("root",
 				"org.springframework.boot", "spring-boot-starter", DependencyScope.COMPILE)));
 
 		generatePom(build, (pom) -> {
@@ -1254,8 +1252,8 @@ class MavenBuildWriterTests {
 	@Test
 	void powWithProfileReporting() {
 		MavenBuild build = new MavenBuild();
-		build.profiles().add("profile1",
-				profile -> profile.reporting((reporting) -> reporting.excludeDefaults(true).outputDirectory("/here")));
+		build.profiles().add("profile1", (profile) -> profile
+				.reporting((reporting) -> reporting.excludeDefaults(true).outputDirectory("/here")));
 
 		generatePom(build, (pom) -> {
 			NodeAssert profile = pom.nodeAtPath("/project/profiles/profile");
@@ -1276,7 +1274,7 @@ class MavenBuildWriterTests {
 	@Test
 	void powWithProfileReportingPlugin() {
 		MavenBuild build = new MavenBuild();
-		build.profiles().add("profile1", profile -> profile.reporting(
+		build.profiles().add("profile1", (profile) -> profile.reporting(
 				(reporting) -> reporting.reportPlugins((reportPlugins) -> reportPlugins.add("org.apache.maven.plugins",
 						"maven-project-info-reports-plugin", (plugin) -> plugin.version("2.6").inherited("true")
 								.configuration((configuration) -> configuration.add("config1", "value1"))))));
@@ -1304,9 +1302,9 @@ class MavenBuildWriterTests {
 	@Test
 	void powWithProfileReportingPluginReportSets() {
 		MavenBuild build = new MavenBuild();
-		build.profiles().add("profile1", profile -> profile.reporting((reporting) -> reporting.reportPlugins(
+		build.profiles().add("profile1", (profile) -> profile.reporting((reporting) -> reporting.reportPlugins(
 				(reportPlugins) -> reportPlugins.add("org.apache.maven.plugins", "maven-project-info-reports-plugin",
-						(plugin) -> plugin.reportSets((reportSets -> reportSets.add("reportSet1",
+						(plugin) -> plugin.reportSets(((reportSets) -> reportSets.add("reportSet1",
 								(reportSet) -> reportSet.inherited("true").report("reportA").configuration(
 										(configuration) -> configuration.add("config1", "value1")))))))));
 
@@ -1333,7 +1331,7 @@ class MavenBuildWriterTests {
 	void powWithProfileDependencyManagement() {
 		MavenBuild build = new MavenBuild();
 		build.profiles().add("profile1",
-				profile -> profile.dependencyManagement((dependencyManagement) -> dependencyManagement.add("test",
+				(profile) -> profile.dependencyManagement((dependencyManagement) -> dependencyManagement.add("test",
 						BillOfMaterials.withCoordinates("com.example", "my-project-dependencies")
 								.version(VersionReference.ofValue("1.0.0.RELEASE")))));
 
@@ -1356,7 +1354,7 @@ class MavenBuildWriterTests {
 	@Test
 	void powWithProfileDistributionManagement() {
 		MavenBuild build = new MavenBuild();
-		build.profiles().add("profile1", profile -> profile
+		build.profiles().add("profile1", (profile) -> profile
 				.distributionManagement((distribution) -> distribution.downloadUrl("https://example.com/download")));
 
 		generatePom(build, (pom) -> {
@@ -1378,7 +1376,7 @@ class MavenBuildWriterTests {
 	void powWithProfileProperties() {
 		MavenBuild build = new MavenBuild();
 		build.profiles().add("profile1",
-				profile -> profile.properties((properties) -> properties.add("prop1", "prop2")));
+				(profile) -> profile.properties((properties) -> properties.add("prop1", "prop2")));
 
 		generatePom(build, (pom) -> {
 			NodeAssert profile = pom.nodeAtPath("/project/profiles/profile");

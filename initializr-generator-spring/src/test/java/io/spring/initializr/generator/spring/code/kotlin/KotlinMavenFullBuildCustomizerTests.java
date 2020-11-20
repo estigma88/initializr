@@ -18,9 +18,9 @@ package io.spring.initializr.generator.spring.code.kotlin;
 
 import io.spring.initializr.generator.buildsystem.maven.MavenBuild;
 import io.spring.initializr.generator.buildsystem.maven.MavenConfiguration;
+import io.spring.initializr.generator.buildsystem.maven.MavenConfiguration.Setting;
 import io.spring.initializr.generator.buildsystem.maven.MavenPlugin.Dependency;
 import io.spring.initializr.generator.buildsystem.maven.MavenPlugin.Execution;
-import io.spring.initializr.generator.buildsystem.maven.MavenConfiguration.Setting;
 import io.spring.initializr.generator.version.VersionProperty;
 import org.junit.jupiter.api.Test;
 

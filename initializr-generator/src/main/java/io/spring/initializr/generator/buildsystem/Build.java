@@ -39,10 +39,10 @@ public abstract class Build {
 	protected Build(BuildItemResolver buildItemResolver) {
 		this.resolver = determineBuildItemResolver(buildItemResolver);
 		this.properties = new PropertyContainer();
-		this.dependencies = new DependencyContainer(resolver::resolveDependency);
-		this.boms = new BomContainer(resolver::resolveBom);
-		this.repositories = new MavenRepositoryContainer(resolver::resolveRepository);
-		this.pluginRepositories = new MavenRepositoryContainer(resolver::resolveRepository);
+		this.dependencies = new DependencyContainer(this.resolver::resolveDependency);
+		this.boms = new BomContainer(this.resolver::resolveBom);
+		this.repositories = new MavenRepositoryContainer(this.resolver::resolveRepository);
+		this.pluginRepositories = new MavenRepositoryContainer(this.resolver::resolveRepository);
 	}
 
 	private static BuildItemResolver determineBuildItemResolver(BuildItemResolver buildItemResolver) {
@@ -111,7 +111,7 @@ public abstract class Build {
 	}
 
 	public BuildItemResolver getResolver() {
-		return resolver;
+		return this.resolver;
 	}
 
 }
