@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2019 the original author or authors.
+ * Copyright 2012-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import io.spring.initializr.generator.buildsystem.maven.MavenLicense.Distributio
 import io.spring.initializr.generator.io.IndentingWriter;
 import io.spring.initializr.generator.version.VersionProperty;
 import io.spring.initializr.generator.version.VersionReference;
+import java.util.Comparator;
 import org.junit.jupiter.api.Test;
 
 import java.io.StringWriter;
@@ -186,6 +187,27 @@ class MavenBuildWriterTests {
         });
     }
 
+	@Test
+	void pomWithNoScm() {
+		MavenBuild build = new MavenBuild();
+		build.settings().coordinates("com.example.demo", "demo").build();
+		generatePom(build, (pom) -> assertThat(pom.nodeAtPath("/project/scm")).isNull());
+	}
+
+	@Test
+	void pomWithScm() {
+		MavenBuild build = new MavenBuild();
+		build.settings().scm(
+				(scm) -> scm.connection("connection").developerConnection("developerConnection").tag("tag").url("url"));
+		generatePom(build, (pom) -> {
+			NodeAssert dependency = pom.nodeAtPath("/project/scm");
+			assertThat(dependency).textAtPath("connection").isEqualTo("connection");
+			assertThat(dependency).textAtPath("developerConnection").isEqualTo("developerConnection");
+			assertThat(dependency).textAtPath("tag").isEqualTo("tag");
+			assertThat(dependency).textAtPath("url").isEqualTo("url");
+		});
+	}
+
     @Test
     void pomWithProperties() {
         MavenBuild build = new MavenBuild();
@@ -334,6 +356,19 @@ class MavenBuildWriterTests {
         });
     }
 
+	@Test
+	void pomWithClassifierDependency() {
+		MavenBuild build = new MavenBuild();
+		build.settings().coordinates("com.example.demo", "demo");
+		build.dependencies().add("foo-bar", Dependency.withCoordinates("com.example", "acme").classifier("test-jar"));
+		generatePom(build, (pom) -> {
+			NodeAssert dependency = pom.nodeAtPath("/project/dependencies/dependency");
+			assertThat(dependency).textAtPath("groupId").isEqualTo("com.example");
+			assertThat(dependency).textAtPath("artifactId").isEqualTo("acme");
+			assertThat(dependency).textAtPath("classifier").isEqualTo("test-jar");
+		});
+	}
+
     @Test
     void pomWithExclusions() {
         MavenBuild build = new MavenBuild();
@@ -387,6 +422,39 @@ class MavenBuildWriterTests {
             assertThat(dependency).textAtPath("type").isEqualTo("tar.gz");
         });
     }
+
+	@Test
+	void pomWithOrderedDependencies() {
+		MavenBuild build = new MavenBuild();
+		build.dependencies().add("beta", Dependency.withCoordinates("com.example", "beta"));
+		build.dependencies().add("alpha", Dependency.withCoordinates("com.example", "alpha"));
+		build.dependencies().add("web",
+				Dependency.withCoordinates("org.springframework.boot", "spring-boot-starter-web"));
+		build.dependencies().add("root", Dependency.withCoordinates("org.springframework.boot", "spring-boot-starter"));
+		String pom = writePom(new MavenBuildWriter(), build);
+		assertThat(pom).containsSubsequence("<artifactId>spring-boot-starter</artifactId>",
+				"<artifactId>spring-boot-starter-web</artifactId>", "<artifactId>alpha</artifactId>",
+				"<artifactId>beta</artifactId>");
+	}
+
+	@Test
+	void pomWithOrderedDependenciesAndCustomComparator() {
+		MavenBuild build = new MavenBuild();
+		build.dependencies().add("beta", Dependency.withCoordinates("com.example", "beta"));
+		build.dependencies().add("alpha", Dependency.withCoordinates("com.example", "alpha"));
+		build.dependencies().add("web",
+				Dependency.withCoordinates("org.springframework.boot", "spring-boot-starter-web"));
+		build.dependencies().add("root", Dependency.withCoordinates("org.springframework.boot", "spring-boot-starter"));
+		MavenBuildWriter writer = new MavenBuildWriter() {
+			@Override
+			protected Comparator<Dependency> getDependencyComparator() {
+				return Comparator.comparing(Dependency::getArtifactId);
+			}
+		};
+		String pom = writePom(writer, build);
+		assertThat(pom).containsSubsequence("<artifactId>alpha</artifactId>", "<artifactId>beta</artifactId>",
+				"<artifactId>spring-boot-starter</artifactId>", "<artifactId>spring-boot-starter-web</artifactId>");
+	}
 
     @Test
     void pomWithBom() {
@@ -640,6 +708,35 @@ class MavenBuildWriterTests {
         });
     }
 
+	@Test
+	void pomWithNoDefaultGoal() {
+		MavenBuild build = new MavenBuild();
+		build.settings().coordinates("com.example.demo", "demo").build();
+		generatePom(build, (pom) -> assertThat(pom.nodeAtPath("/project/build/defaultGoal")).isNull());
+	}
+
+	@Test
+	void pomWithDefaultGoal() {
+		MavenBuild build = new MavenBuild();
+		build.settings().coordinates("com.example.demo", "demo").defaultGoal("clean package");
+		generatePom(build,
+				(pom) -> assertThat(pom).textAtPath("/project/build/defaultGoal").isEqualTo("clean package"));
+	}
+
+	@Test
+	void pomWithNoFinalName() {
+		MavenBuild build = new MavenBuild();
+		build.settings().coordinates("com.example.demo", "demo").build();
+		generatePom(build, (pom) -> assertThat(pom.nodeAtPath("/project/build/finalName")).isNull());
+	}
+
+	@Test
+	void pomWithFinalName() {
+		MavenBuild build = new MavenBuild();
+		build.settings().coordinates("com.example.demo", "demo").finalName("demo.jar");
+		generatePom(build, (pom) -> assertThat(pom).textAtPath("/project/build/finalName").isEqualTo("demo.jar"));
+	}
+
     @Test
     void pomWithCustomSourceDirectories() {
         MavenBuild build = new MavenBuild();
@@ -661,13 +758,13 @@ class MavenBuildWriterTests {
     }
 
     @Test
-    void powWithDistributionManagementEmpty() {
+	void pomWithDistributionManagementEmpty() {
         MavenBuild build = new MavenBuild();
         generatePom(build, (pom) -> assertThat(pom).nodeAtPath("/project/distributionManagement").isNull());
     }
 
     @Test
-    void powWithDistributionManagementDownloadUrl() {
+	void pomWithDistributionManagementDownloadUrl() {
         MavenBuild build = new MavenBuild();
         build.distributionManagement().downloadUrl("https://example.com/download");
         generatePom(build, (pom) -> {
@@ -681,7 +778,7 @@ class MavenBuildWriterTests {
     }
 
     @Test
-    void powWithDistributionManagementRepository() {
+	void pomWithDistributionManagementRepository() {
         MavenBuild build = new MavenBuild();
         build.distributionManagement().repository((repository) -> repository.id("released-repo").name("released repo")
                 .url("https://upload.example.com/releases"));
@@ -701,7 +798,7 @@ class MavenBuildWriterTests {
     }
 
     @Test
-    void powWithDistributionManagementSnapshotRepository() {
+	void pomWithDistributionManagementSnapshotRepository() {
         MavenBuild build = new MavenBuild();
         build.distributionManagement().snapshotRepository((repository) -> repository.id("snapshot-repo")
                 .name("snapshot repo").url("scp://upload.example.com/snapshots").layout("legacy").uniqueVersion(true));
@@ -721,7 +818,7 @@ class MavenBuildWriterTests {
     }
 
     @Test
-    void powWithDistributionManagementSite() {
+	void pomWithDistributionManagementSite() {
         MavenBuild build = new MavenBuild();
         build.distributionManagement().site((site) -> site.id("website").name("web site"))
                 .site((site) -> site.url("scp://www.example.com/www/docs/project"));
@@ -739,7 +836,7 @@ class MavenBuildWriterTests {
     }
 
     @Test
-    void powWithDistributionManagementRelocation() {
+	void pomWithDistributionManagementRelocation() {
         MavenBuild build = new MavenBuild();
         build.distributionManagement().relocation((relocation) -> relocation.groupId("com.example.new")
                 .artifactId("project").version("1.0.0").message("moved"));
@@ -755,6 +852,16 @@ class MavenBuildWriterTests {
             assertThat(distributionManagement).textAtPath("relocation/message").isEqualTo("moved");
         });
     }
+
+	@Test
+	void pomWithReservedCharacters() {
+		MavenBuild build = new MavenBuild();
+		build.settings().coordinates("com.example.demo", "demo").name("<demo project>")
+				.description("A \"demo\" project for 'developers' & 'testers'");
+		String pom = writePom(new MavenBuildWriter(), build);
+		assertThat(pom).contains("<name>&lt;demo project&gt;</name>").contains(
+				"<description>A &quot;demo&quot; project for &apos;developers&apos; &amp; &apos;testers&apos;</description>");
+	}
 
     @Test
     void powWithProfile() {
@@ -1315,10 +1422,13 @@ class MavenBuildWriterTests {
     }
 
     private void generatePom(MavenBuild mavenBuild, Consumer<NodeAssert> consumer) {
-        MavenBuildWriter writer = new MavenBuildWriter();
+		consumer.accept(new NodeAssert(writePom(new MavenBuildWriter(), mavenBuild)));
+	}
+
+	private String writePom(MavenBuildWriter writer, MavenBuild mavenBuild) {
         StringWriter out = new StringWriter();
         writer.writeTo(new IndentingWriter(out), mavenBuild);
-        consumer.accept(new NodeAssert(out.toString()));
+		return out.toString();
     }
 
 }

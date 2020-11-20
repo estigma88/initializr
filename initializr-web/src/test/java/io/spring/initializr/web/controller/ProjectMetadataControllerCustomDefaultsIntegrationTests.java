@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2019 the original author or authors.
+ * Copyright 2012-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -84,24 +84,38 @@ class ProjectMetadataControllerCustomDefaultsIntegrationTests extends AbstractFu
 	@Test
 	void metadataClientEndpoint() {
 		ResponseEntity<String> response = execute("/metadata/client", String.class, null, "application/json");
-		validateCurrentMetadata(response);
+		validateDefaultMetadata(response);
 	}
 
 	@Test
-	void noBootVersion() throws JSONException {
-		ResponseEntity<String> response = execute("/dependencies", String.class, null, "application/json");
+	void dependenciesNoAcceptHeaderWithNoBootVersion() throws JSONException {
+		validateDependenciesMetadata("*/*", DEFAULT_METADATA_MEDIA_TYPE);
+	}
+
+	@Test
+	void dependenciesV21WithNoBootVersion() throws JSONException {
+		validateDependenciesMetadata("application/vnd.initializr.v2.1+json", DEFAULT_METADATA_MEDIA_TYPE);
+	}
+
+	@Test
+	void dependenciesV22WithNoBootVersion() throws JSONException {
+		validateDependenciesMetadata("application/vnd.initializr.v2.2+json", CURRENT_METADATA_MEDIA_TYPE);
+	}
+
+	private void validateDependenciesMetadata(String acceptHeader, MediaType expectedMediaType) throws JSONException {
+		ResponseEntity<String> response = execute("/dependencies", String.class, null, acceptHeader);
 		assertThat(response.getHeaders().getFirst(HttpHeaders.ETAG)).isNotNull();
-		validateContentType(response, CURRENT_METADATA_MEDIA_TYPE);
+		validateContentType(response, expectedMediaType);
 		validateDependenciesOutput("2.1.4", response.getBody());
 	}
 
 	@Test
 	void filteredDependencies() throws JSONException {
-		ResponseEntity<String> response = execute("/dependencies?bootVersion=2.2.1.RELEASE", String.class, null,
+		ResponseEntity<String> response = execute("/dependencies?bootVersion=2.4.1.RELEASE", String.class, null,
 				"application/json");
 		assertThat(response.getHeaders().getFirst(HttpHeaders.ETAG)).isNotNull();
-		validateContentType(response, CURRENT_METADATA_MEDIA_TYPE);
-		validateDependenciesOutput("2.2.1", response.getBody());
+		validateContentType(response, DEFAULT_METADATA_MEDIA_TYPE);
+		validateDependenciesOutput("2.4.1", response.getBody());
 	}
 
 	protected void validateDependenciesOutput(String version, String actual) throws JSONException {

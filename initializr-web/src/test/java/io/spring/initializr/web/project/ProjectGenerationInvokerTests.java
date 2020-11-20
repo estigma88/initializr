@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2019 the original author or authors.
+ * Copyright 2012-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,12 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 
+import io.spring.initializr.generator.buildsystem.maven.MavenBuildSystem;
 import io.spring.initializr.generator.io.IndentingWriterFactory;
 import io.spring.initializr.generator.io.SimpleIndentStrategy;
 import io.spring.initializr.generator.io.template.MustacheTemplateRenderer;
+import io.spring.initializr.generator.project.ProjectAssetGenerator;
+import io.spring.initializr.generator.project.ProjectDescription;
 import io.spring.initializr.generator.project.ProjectDirectoryFactory;
 import io.spring.initializr.generator.test.InitializrMetadataTestBuilder;
 import io.spring.initializr.generator.test.buildsystem.gradle.GroovyDslGradleBuildAssert;
@@ -60,7 +63,7 @@ public class ProjectGenerationInvokerTests {
 
 	private static final InitializrMetadata metadata = InitializrMetadataTestBuilder.withDefaults().build();
 
-	private ProjectGenerationInvoker invoker;
+	private ProjectGenerationInvoker<ProjectRequest> invoker;
 
 	private AnnotationConfigApplicationContext context;
 
@@ -69,7 +72,7 @@ public class ProjectGenerationInvokerTests {
 	@BeforeEach
 	void setup() {
 		setupContext();
-		this.invoker = new ProjectGenerationInvoker(this.context, this.eventPublisher,
+		this.invoker = new ProjectGenerationInvoker<>(this.context, this.eventPublisher,
 				new DefaultProjectRequestToDescriptionConverter());
 	}
 
@@ -167,6 +170,26 @@ public class ProjectGenerationInvokerTests {
 		ProjectGenerationResult result = this.invoker.invokeProjectStructureGeneration(request);
 		this.invoker.cleanTempFiles(result.getRootDirectory());
 		assertThat(result.getRootDirectory()).doesNotExist();
+	}
+
+	@Test
+	void invokeProjectStructureGenerationWithCustomAssetGenerator(@TempDir Path directory) {
+		WebProjectRequest webRequest = new WebProjectRequest();
+		webRequest.initialize(metadata);
+		webRequest.setGroupId("org.acme.test");
+		webRequest.setType("maven-project");
+		ProjectGenerationResult result = new ProjectGenerationInvoker<ProjectRequest>(this.context, this.eventPublisher,
+				new DefaultProjectRequestToDescriptionConverter()) {
+			@Override
+			protected ProjectAssetGenerator<Path> getProjectAssetGenerator(ProjectDescription description) {
+				assertThat(description.getBuildSystem()).isInstanceOf(MavenBuildSystem.class);
+				assertThat(description.getGroupId()).isEqualTo("org.acme.test");
+				return (context) -> directory;
+			}
+		}.invokeProjectStructureGeneration(webRequest);
+		assertThat(result.getRootDirectory()).isSameAs(directory);
+		assertThat(result.getRootDirectory()).isEmptyDirectory();
+		verifyProjectSuccessfulEventFor(webRequest);
 	}
 
 	private void setupContext() {

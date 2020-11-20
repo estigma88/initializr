@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2019 the original author or authors.
+ * Copyright 2012-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,11 +39,11 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withStatus;
 
 /**
- * Tests for {@link DefaultInitializrMetadataUpdateStrategy}.
+ * Tests for {@link SaganInitializrMetadataUpdateStrategy}.
  *
  * @author Stephane Nicoll
  */
-class DefaultInitializrMetadataUpdateStrategyTests {
+class SaganInitializrMetadataUpdateStrategyTests {
 
 	private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -62,18 +62,19 @@ class DefaultInitializrMetadataUpdateStrategyTests {
 		InitializrMetadata metadata = new InitializrMetadataTestBuilder().addBootVersion("0.0.9.RELEASE", true)
 				.addBootVersion("0.0.8.RELEASE", false).build();
 		assertThat(metadata.getBootVersions().getDefault().getId()).isEqualTo("0.0.9.RELEASE");
-		DefaultInitializrMetadataUpdateStrategy provider = new DefaultInitializrMetadataUpdateStrategy(
-				this.restTemplate, objectMapper);
+		SaganInitializrMetadataUpdateStrategy provider = new SaganInitializrMetadataUpdateStrategy(this.restTemplate,
+				objectMapper);
 		expectJson(metadata.getConfiguration().getEnv().getSpringBootMetadataUrl(), "metadata/sagan/spring-boot.json");
 
 		InitializrMetadata updatedMetadata = provider.update(metadata);
 		assertThat(updatedMetadata.getBootVersions()).isNotNull();
 		List<DefaultMetadataElement> updatedBootVersions = updatedMetadata.getBootVersions().getContent();
-		assertThat(updatedBootVersions).hasSize(4);
-		assertBootVersion(updatedBootVersions.get(0), "1.4.1 (SNAPSHOT)", false);
-		assertBootVersion(updatedBootVersions.get(1), "1.4.0", true);
-		assertBootVersion(updatedBootVersions.get(2), "1.3.8 (SNAPSHOT)", false);
-		assertBootVersion(updatedBootVersions.get(3), "1.3.7", false);
+		assertThat(updatedBootVersions).hasSize(5);
+		assertBootVersion(updatedBootVersions.get(0), "2.5.0 (M1)", false);
+		assertBootVersion(updatedBootVersions.get(1), "2.4.1 (SNAPSHOT)", false);
+		assertBootVersion(updatedBootVersions.get(2), "2.4.0", true);
+		assertBootVersion(updatedBootVersions.get(3), "2.3.8 (SNAPSHOT)", false);
+		assertBootVersion(updatedBootVersions.get(4), "2.3.7", false);
 	}
 
 	@Test
@@ -81,19 +82,20 @@ class DefaultInitializrMetadataUpdateStrategyTests {
 		InitializrMetadata metadata = new InitializrMetadataTestBuilder().addBootVersion("0.0.9.RELEASE", true)
 				.addBootVersion("0.0.8.RELEASE", false).build();
 		assertThat(metadata.getBootVersions().getDefault().getId()).isEqualTo("0.0.9.RELEASE");
-		DefaultInitializrMetadataUpdateStrategy provider = new DefaultInitializrMetadataUpdateStrategy(
-				this.restTemplate, objectMapper);
+		SaganInitializrMetadataUpdateStrategy provider = new SaganInitializrMetadataUpdateStrategy(this.restTemplate,
+				objectMapper);
 		expectJson(metadata.getConfiguration().getEnv().getSpringBootMetadataUrl(),
 				"metadata/sagan/spring-boot-no-default.json");
 
 		InitializrMetadata updatedMetadata = provider.update(metadata);
 		assertThat(updatedMetadata.getBootVersions()).isNotNull();
 		List<DefaultMetadataElement> updatedBootVersions = updatedMetadata.getBootVersions().getContent();
-		assertThat(updatedBootVersions).hasSize(4);
-		assertBootVersion(updatedBootVersions.get(0), "1.3.1 (SNAPSHOT)", true);
-		assertBootVersion(updatedBootVersions.get(1), "1.3.0", false);
-		assertBootVersion(updatedBootVersions.get(2), "1.2.6 (SNAPSHOT)", false);
-		assertBootVersion(updatedBootVersions.get(3), "1.2.5", false);
+		assertThat(updatedBootVersions).hasSize(5);
+		assertBootVersion(updatedBootVersions.get(0), "2.5.0 (M1)", true);
+		assertBootVersion(updatedBootVersions.get(1), "2.4.1 (SNAPSHOT)", false);
+		assertBootVersion(updatedBootVersions.get(2), "2.4.0", false);
+		assertBootVersion(updatedBootVersions.get(3), "2.3.8 (SNAPSHOT)", false);
+		assertBootVersion(updatedBootVersions.get(4), "2.3.7", false);
 	}
 
 	private static void assertBootVersion(DefaultMetadataElement actual, String name, boolean defaultVersion) {

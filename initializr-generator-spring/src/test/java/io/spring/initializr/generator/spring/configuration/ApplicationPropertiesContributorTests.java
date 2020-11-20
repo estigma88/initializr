@@ -20,10 +20,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-import io.spring.initializr.generator.test.project.ProjectStructure;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
+import io.spring.initializr.generator.test.project.ProjectStructure;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**

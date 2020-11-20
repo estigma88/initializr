@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2019 the original author or authors.
+ * Copyright 2012-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package io.spring.initializr.generator.buildsystem.gradle;
 
 import java.io.StringWriter;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
 
 import io.spring.initializr.generator.buildsystem.BillOfMaterials;
@@ -364,6 +365,14 @@ class GroovyDslGradleBuildWriterTests {
 	}
 
 	@Test
+	void gradleBuildWithClassifierDependency() {
+		GradleBuild build = new GradleBuild();
+		build.dependencies().add("root", Dependency.withCoordinates("com.example", "acme").classifier("test-jar"));
+		List<String> lines = generateBuild(build);
+		assertThat(lines).containsSequence("dependencies {", "    implementation 'com.example:acme:test-jar'", "}");
+	}
+
+	@Test
 	void gradleBuildWithExclusions() {
 		GradleBuild build = new GradleBuild();
 		build.dependencies().add("test",
@@ -398,6 +407,51 @@ class GroovyDslGradleBuildWriterTests {
 	}
 
 	@Test
+	void gradleBuildWithNonNullArtifactTypeAndClassifierDependency() {
+		GradleBuild build = new GradleBuild();
+		build.dependencies().add("root", Dependency.withCoordinates("com.example", "acme")
+				.scope(DependencyScope.COMPILE).type("tar.gz").classifier("test-jar"));
+		List<String> lines = generateBuild(build);
+		assertThat(lines).containsSequence("dependencies {", "    implementation 'com.example:acme:test-jar@tar.gz'",
+				"}");
+	}
+
+	@Test
+	void gradleBuildWithOrderedDependencies() {
+		GradleBuild build = new GradleBuild();
+		build.dependencies().add("beta", Dependency.withCoordinates("com.example", "beta"));
+		build.dependencies().add("alpha", Dependency.withCoordinates("com.example", "alpha"));
+		build.dependencies().add("web",
+				Dependency.withCoordinates("org.springframework.boot", "spring-boot-starter-web"));
+		build.dependencies().add("root", Dependency.withCoordinates("org.springframework.boot", "spring-boot-starter"));
+		List<String> lines = generateBuild(build);
+		assertThat(lines).containsSequence("    implementation 'org.springframework.boot:spring-boot-starter'",
+				"    implementation 'org.springframework.boot:spring-boot-starter-web'",
+				"    implementation 'com.example:alpha'", "    implementation 'com.example:beta'");
+	}
+
+	@Test
+	void gradleBuildWithOrderedDependenciesAndCustomComparator() {
+		GradleBuild build = new GradleBuild();
+		build.dependencies().add("beta", Dependency.withCoordinates("com.example", "beta"));
+		build.dependencies().add("alpha", Dependency.withCoordinates("com.example", "alpha"));
+		build.dependencies().add("web",
+				Dependency.withCoordinates("org.springframework.boot", "spring-boot-starter-web"));
+		build.dependencies().add("root", Dependency.withCoordinates("org.springframework.boot", "spring-boot-starter"));
+		GroovyDslGradleBuildWriter writer = new GroovyDslGradleBuildWriter() {
+			@Override
+			protected Comparator<Dependency> getDependencyComparator() {
+				return Comparator.comparing(Dependency::getArtifactId);
+			}
+		};
+		List<String> lines = generateBuild(writer, build);
+		assertThat(lines).containsSequence("    implementation 'com.example:alpha'",
+				"    implementation 'com.example:beta'",
+				"    implementation 'org.springframework.boot:spring-boot-starter'",
+				"    implementation 'org.springframework.boot:spring-boot-starter-web'");
+	}
+
+	@Test
 	void gradleBuildWithBom() {
 		GradleBuild build = new GradleBuild();
 		build.boms().add("test", BillOfMaterials.withCoordinates("com.example", "my-project-dependencies")
@@ -429,7 +483,10 @@ class GroovyDslGradleBuildWriterTests {
 	}
 
 	private List<String> generateBuild(GradleBuild build) {
-		GradleBuildWriter writer = new GroovyDslGradleBuildWriter();
+		return generateBuild(new GroovyDslGradleBuildWriter(), build);
+	}
+
+	private List<String> generateBuild(GroovyDslGradleBuildWriter writer, GradleBuild build) {
 		StringWriter out = new StringWriter();
 		writer.writeTo(new IndentingWriter(out), build);
 		String[] lines = out.toString().split("\\r?\\n");

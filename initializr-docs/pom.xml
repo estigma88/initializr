@@ -14,7 +14,7 @@
 	<properties>
 		<main.basedir>${basedir}/..</main.basedir>
 		<maven.test.skip>true</maven.test.skip>
-		<spring-doc-resources.version>0.1.0.RELEASE</spring-doc-resources.version>
+		<spring-doc-resources.version>0.2.2.RELEASE</spring-doc-resources.version>
 	</properties>
 	<scm>
 		<url>${git.url}</url>
@@ -209,11 +209,11 @@
 								</goals>
 								<configuration>
 									<backend>html5</backend>
-									<sourceHighlighter>highlight.js</sourceHighlighter>
 									<doctype>book</doctype>
 									<attributes>
 										<highlightjsdir>js/highlight</highlightjsdir>
-										<highlightjs-theme>atom-one-dark-reasonable</highlightjs-theme>
+										<highlightjs-theme>github</highlightjs-theme>
+										<source-highlighter>highlight.js</source-highlighter>
 										<linkcss>true</linkcss>
 										<imagesdir>./images</imagesdir>
 										<icons>font</icons>
@@ -314,7 +314,7 @@
 										<propertyregex property="version-type" override="true" input="${version-type}" regexp=".*\.(.*)" replace="\1" />
 										<propertyregex property="version-type" override="true" input="${version-type}" regexp="(M)\d+" replace="MILESTONE" />
 										<propertyregex property="version-type" override="true" input="${version-type}" regexp="(RC)\d+" replace="MILESTONE" />
-										<propertyregex property="version-type" override="true" input="${version-type}" regexp="BUILD-(.*)" replace="SNAPSHOT" />
+										<propertyregex property="version-type" override="true" input="${version-type}" regexp="(SNAPSHOT)\d+" replace="SNAPSHOT" />
 										<stringutil string="${version-type}" property="initializr-repo">
 											<lowercase />
 										</stringutil>

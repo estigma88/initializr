@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2019 the original author or authors.
+ * Copyright 2012-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -87,6 +87,8 @@ public class Dependency extends MetadataElement implements Describable {
 
 	private String version;
 
+	private String classifier;
+
 	private String type;
 
 	private List<Mapping> mappings = new ArrayList<>();
@@ -130,6 +132,7 @@ public class Dependency extends MetadataElement implements Describable {
 		this.groupId = dependency.groupId;
 		this.artifactId = dependency.artifactId;
 		this.version = dependency.version;
+		this.classifier = dependency.classifier;
 		this.type = dependency.type;
 		this.mappings.addAll(dependency.mappings);
 		this.scope = dependency.scope;
@@ -247,6 +250,7 @@ public class Dependency extends MetadataElement implements Describable {
 				dependency.artifactId = (mapping.artifactId != null) ? mapping.artifactId : this.artifactId;
 				dependency.version = (mapping.version != null) ? mapping.version : this.version;
 				dependency.starter = (mapping.starter != null) ? mapping.starter : this.starter;
+				dependency.repository = (mapping.repository != null) ? mapping.repository : this.repository;
 				dependency.versionRequirement = mapping.range.toString();
 				dependency.mappings = null;
 				return dependency;
@@ -323,6 +327,19 @@ public class Dependency extends MetadataElement implements Describable {
 
 	public void setVersion(String version) {
 		this.version = version;
+	}
+
+	/**
+	 * Return the classifier, can be {@code null} to indicate that no classifier is
+	 * available.
+	 * @return the classifier or {@code null}
+	 */
+	public String getClassifier() {
+		return this.classifier;
+	}
+
+	public void setClassifier(String classifier) {
+		this.classifier = classifier;
 	}
 
 	/**
@@ -515,6 +532,12 @@ public class Dependency extends MetadataElement implements Describable {
 		 */
 		private Boolean starter;
 
+		/**
+		 * The extra repository to use for this mapping or {@code null} to use the
+		 * default.
+		 */
+		private String repository;
+
 		@JsonIgnore
 		private VersionRange range;
 
@@ -550,6 +573,14 @@ public class Dependency extends MetadataElement implements Describable {
 			this.starter = starter;
 		}
 
+		public String getRepository() {
+			return this.repository;
+		}
+
+		public void setRepository(String repository) {
+			this.repository = repository;
+		}
+
 		public VersionRange getRange() {
 			return this.range;
 		}
@@ -562,13 +593,15 @@ public class Dependency extends MetadataElement implements Describable {
 			this.compatibilityRange = compatibilityRange;
 		}
 
-		public static Mapping create(String range, String groupId, String artifactId, String version, Boolean starter) {
+		public static Mapping create(String range, String groupId, String artifactId, String version, Boolean starter,
+				String repository) {
 			Mapping mapping = new Mapping();
 			mapping.compatibilityRange = range;
 			mapping.groupId = groupId;
 			mapping.artifactId = artifactId;
 			mapping.version = version;
 			mapping.starter = starter;
+			mapping.repository = repository;
 			return mapping;
 		}
 

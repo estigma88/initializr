@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2019 the original author or authors.
+ * Copyright 2012-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
+import io.spring.initializr.metadata.Dependency;
 import org.assertj.core.api.AssertProvider;
 import org.junit.jupiter.api.Test;
 
@@ -185,6 +186,15 @@ class MavenBuildAssertTests {
 	}
 
 	@Test
+	void hasDependencyWithMultipleCandidates() {
+		Dependency main = Dependency.withId("acme", "com.example.acme", "library", "1.2.0");
+		Dependency test = Dependency.withId("acme", "com.example.acme", "library", "1.2.0", "test");
+		test.setType("test-jar");
+		assertThat(forMavenBuild("sample-dependency-multiple-identical-gav-pom.xml")).hasDependency(main)
+				.hasDependency(test);
+	}
+
+	@Test
 	void doesNotHaveDependencyArtifactId() {
 		assertThat(forSampleMavenBuild()).doesNotHaveDependency("com.example.acme", "wrong");
 	}
@@ -232,6 +242,22 @@ class MavenBuildAssertTests {
 	void hasBomWithWrongVersion() {
 		assertThatExceptionOfType(AssertionError.class).isThrownBy(
 				() -> assertThat(forSampleMavenBuild()).hasBom("com.example.acme", "library-bom", "${wrong.version}"));
+	}
+
+	@Test
+	void doesNotHaveBomArtifactId() {
+		assertThat(forSampleMavenBuild()).doesNotHaveBom("com.example.acme", "wrong");
+	}
+
+	@Test
+	void doesNotHaveBomGroupId() {
+		assertThat(forSampleMavenBuild()).doesNotHaveBom("com.example.wrong", "library-bom");
+	}
+
+	@Test
+	void doesNotHaveBomWithMatchingBom() {
+		assertThatExceptionOfType(AssertionError.class)
+				.isThrownBy(() -> assertThat(forSampleMavenBuild()).doesNotHaveBom("com.example.acme", "library-bom"));
 	}
 
 	@Test

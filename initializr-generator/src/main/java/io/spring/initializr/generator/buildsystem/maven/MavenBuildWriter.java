@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2019 the original author or authors.
+ * Copyright 2012-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,6 +74,7 @@ public class MavenBuildWriter {
 			writeProjectName(writer, settings);
 			writeCollectionElement(writer, "licenses", settings.getLicenses(), this::writeLicense);
 			writeCollectionElement(writer, "developers", settings.getDevelopers(), this::writeDeveloper);
+			writeScm(writer, settings.getScm());
 			writeProperties(writer, build.properties());
 			writeDependencies(writer, build.dependencies());
 			writeDependencyManagement(writer, build.boms());
@@ -82,6 +83,14 @@ public class MavenBuildWriter {
 			writeRepositories(writer, build.repositories(), build.pluginRepositories());
 			writeDistributionManagement(writer, build.getDistributionManagement());
 		});
+	}
+
+	/**
+	 * Return the {@link Comparator} to use to sort dependencies.
+	 * @return a dependency comparator
+	 */
+	protected Comparator<Dependency> getDependencyComparator() {
+		return DependencyComparator.INSTANCE;
 	}
 
 	private void writeProject(IndentingWriter writer, Runnable whenWritten) {
@@ -176,6 +185,17 @@ public class MavenBuildWriter {
 		});
 	}
 
+	private void writeScm(IndentingWriter writer, MavenScm mavenScm) {
+		if (!mavenScm.isEmpty()) {
+			writeElement(writer, "scm", () -> {
+				writeSingleElement(writer, "connection", mavenScm.getConnection());
+				writeSingleElement(writer, "developerConnection", mavenScm.getDeveloperConnection());
+				writeSingleElement(writer, "tag", mavenScm.getTag());
+				writeSingleElement(writer, "url", mavenScm.getUrl());
+			});
+		}
+	}
+
 	private void writeDependencies(IndentingWriter writer, DependencyContainer dependencies) {
 		if (dependencies.isEmpty()) {
 			return;
@@ -203,7 +223,7 @@ public class MavenBuildWriter {
 	private Collection<Dependency> writeDependencies(IndentingWriter writer, DependencyContainer dependencies,
 			Predicate<DependencyScope> filter) {
 		Collection<Dependency> candidates = dependencies.items().filter((dep) -> filter.test(dep.getScope()))
-				.sorted(DependencyComparator.INSTANCE).collect(Collectors.toList());
+				.sorted(getDependencyComparator()).collect(Collectors.toList());
 		writeCollection(writer, candidates, this::writeDependency);
 		return candidates;
 	}
@@ -214,6 +234,7 @@ public class MavenBuildWriter {
 			writeSingleElement(writer, "artifactId", dependency.getArtifactId());
 			writeSingleElement(writer, "version", determineVersion(dependency.getVersion()));
 			writeSingleElement(writer, "scope", scopeForType(dependency.getScope()));
+			writeSingleElement(writer, "classifier", dependency.getClassifier());
 			if (isOptional(dependency)) {
 				writeSingleElement(writer, "optional", Boolean.toString(true));
 			}
@@ -292,12 +313,15 @@ public class MavenBuildWriter {
 
 	private void writeBuild(IndentingWriter writer, MavenBuild build) {
 		MavenBuildSettings settings = build.getSettings();
-		if (settings.getSourceDirectory() == null && settings.getTestSourceDirectory() == null
+		if (settings.getDefaultGoal() == null && settings.getFinalName() == null
+				&& settings.getSourceDirectory() == null && settings.getTestSourceDirectory() == null
 				&& build.resources().isEmpty() && build.testResources().isEmpty() && build.plugins().isEmpty()) {
 			return;
 		}
 		writer.println();
 		writeElement(writer, "build", () -> {
+			writeSingleElement(writer, "defaultGoal", settings.getDefaultGoal());
+			writeSingleElement(writer, "finalName", settings.getFinalName());
 			writeSingleElement(writer, "sourceDirectory", settings.getSourceDirectory());
 			writeSingleElement(writer, "testSourceDirectory", settings.getTestSourceDirectory());
 			writeResources(writer, build.resources(), build.testResources());
@@ -619,7 +643,7 @@ public class MavenBuildWriter {
 	private void writeSingleElement(IndentingWriter writer, String name, String text) {
 		if (text != null) {
 			writer.print(String.format("<%s>", name));
-			writer.print(text);
+			writer.print(encodeText(text));
 			writer.println(String.format("</%s>", name));
 		}
 	}
@@ -647,6 +671,33 @@ public class MavenBuildWriter {
 		if (!collection.isEmpty()) {
 			collection.forEach((item) -> itemWriter.accept(writer, item));
 		}
+	}
+
+	private String encodeText(String text) {
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < text.length(); i++) {
+			char character = text.charAt(i);
+			switch (character) {
+			case '\'':
+				sb.append("&apos;");
+				break;
+			case '\"':
+				sb.append("&quot;");
+				break;
+			case '<':
+				sb.append("&lt;");
+				break;
+			case '>':
+				sb.append("&gt;");
+				break;
+			case '&':
+				sb.append("&amp;");
+				break;
+			default:
+				sb.append(character);
+			}
+		}
+		return sb.toString();
 	}
 
 }

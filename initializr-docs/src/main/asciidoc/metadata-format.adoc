@@ -1,5 +1,6 @@
 [[metadata-format]]
 = Metadata Format
+
 This section describes the hal/json structure of the metadata exposed by the
 initializr. Such metadata can be used by third party clients to provide a list of
 options and default settings that can be used to request the creation of a project.
@@ -13,11 +14,17 @@ sent to the service. A good structure for a user agent is `clientId/clientVersio
 == Service Capabilities
 Any third party client can retrieve the capabilities of the service by issuing a
 `GET` on the root URL using the following `Accept` header:
-`application/vnd.initializr.v2.1+json`. Please note that the metadata may evolve in a
+`application/vnd.initializr.v2.2+json`. Please note that the metadata may evolve in a
 non backward compatible way in the future so adding this header ensures the service
 returns the metadata format you expect.
 
-This is an example output for a service running at `https://start.spring.io`:
+The following versions are supported:
+
+* `v2` initial version, with support of V1 version format only
+* `v2.1` support compatibility range and dependencies links
+* `v2.2` (current) support for V1 and V2 version formats.
+
+This is an example output for a service running at `start.example.com`:
 
 .request
 include::{snippets}/metadataWithCurrentAcceptHeader/http-request.adoc[]
@@ -38,7 +45,7 @@ component responsible to generate the project (for instance, generate an executa
 _jar_ project).
 * Java version: the supported java versions
 * Language: the language to use (e.g. Java)
-* Boot version: the Spring Boot version to use
+* Boot version: the platform version to use
 * Additional basic information such as: `groupId`, `artifactId`,  `version`, `name`,
 `description` and `packageName`.
 
@@ -161,10 +168,10 @@ include::{snippets}/metadataWithCurrentAcceptHeader/response-fields/language.val
 
 
 
-=== Boot version
-The `bootVersion` element provides the list of available boot versions
+=== Platform versions
+The `bootVersion` element provides the list of available platform versions
 
-.Spring Boot version example
+.Platform versions example
 include::{snippets}/metadataWithCurrentAcceptHeader/response-fields/bootVersion.values.0.adoc[]
 
 

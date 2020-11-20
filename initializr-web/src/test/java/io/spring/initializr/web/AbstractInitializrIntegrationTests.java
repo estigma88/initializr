@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2019 the original author or authors.
+ * Copyright 2012-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.spring.initializr.generator.test.project.ProjectStructure;
 import io.spring.initializr.web.AbstractInitializrIntegrationTests.Config;
 import io.spring.initializr.web.mapper.InitializrMetadataVersion;
-import io.spring.initializr.web.support.InitializrMetadataUpdateStrategy;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry;
@@ -54,7 +53,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -72,7 +70,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 @SpringBootTest(classes = Config.class)
 public abstract class AbstractInitializrIntegrationTests {
 
-	protected static final MediaType CURRENT_METADATA_MEDIA_TYPE = InitializrMetadataVersion.V2_1.getMediaType();
+	protected static final MediaType DEFAULT_METADATA_MEDIA_TYPE = InitializrMetadataVersion.V2_1.getMediaType();
+
+	protected static final MediaType CURRENT_METADATA_MEDIA_TYPE = InitializrMetadataVersion.V2_2.getMediaType();
 
 	private static final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -125,14 +125,23 @@ public abstract class AbstractInitializrIntegrationTests {
 		}
 	}
 
-	protected void validateCurrentMetadata(ResponseEntity<String> response) {
-		validateContentType(response, CURRENT_METADATA_MEDIA_TYPE);
-		validateCurrentMetadata(response.getBody());
+	protected void validateDefaultMetadata(ResponseEntity<String> response) {
+		validateContentType(response, DEFAULT_METADATA_MEDIA_TYPE);
+		validateMetadata(response.getBody(), "2.1.0");
 	}
 
-	protected void validateCurrentMetadata(String json) {
+	protected void validateCurrentMetadata(ResponseEntity<String> response) {
+		validateContentType(response, CURRENT_METADATA_MEDIA_TYPE);
+		validateMetadata(response.getBody(), "2.2.0");
+	}
+
+	protected void validateDefaultMetadata(String json) {
+		validateMetadata(json, "2.1.0");
+	}
+
+	protected void validateMetadata(String json, String version) {
 		try {
-			JSONObject expected = readMetadataJson("2.1.0");
+			JSONObject expected = readMetadataJson(version);
 			JSONAssert.assertEquals(expected, new JSONObject(json), JSONCompareMode.STRICT);
 		}
 		catch (JSONException ex) {
@@ -354,12 +363,6 @@ public abstract class AbstractInitializrIntegrationTests {
 
 	@EnableAutoConfiguration
 	public static class Config {
-
-		// Disable metadata fetching from spring.io
-		@Bean
-		public InitializrMetadataUpdateStrategy initializrMetadataUpdateStrategy() {
-			return (metadata) -> metadata;
-		}
 
 	}
 
